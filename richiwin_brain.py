@@ -67,11 +67,14 @@ def get_response(intents_list, intents_json):
 def clean_input(text):
     text = text.lower().replace("solve", "").replace("what is", "").replace("?", "").strip()
     text = text.replace("^", "**")
+
     # Implicit multiplication
     text = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', text)
-    re.sub(r'([a-zA-Z])(\d)', r'\1*\2', text)
-    re.sub(r'([a-zA-Z])([a-zA-Z])', r'\1*\2', text)
+    text = re.sub(r'([a-zA-Z])(\d)', r'\1*\2', text)
+    text = re.sub(r'([a-zA-Z])([a-zA-Z])', r'\1*\2', text)
+
     return text
+
 
 def detect_variables(expression):
     variables = set(re.findall(r'[a-zA-Z]', expression))
@@ -155,18 +158,7 @@ def plot_expression(expr_str):
 # ----------------------------
 # 4️⃣ Word Problems / Logic
 # ----------------------------
-def clean_input(text):
-    text = text.lower().replace("solve","").replace("what is","").replace("?","").strip()
-    text = text.replace("^","**")
-    text = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', text)
-    text = re.sub(r'([a-zA-Z])(\d)', r'\1*\2')
-    text = re.sub(r'([a-zA-Z])([a-zA-Z])', r'\1*\2')
-    return text
 
-def detect_variables(expression):
-    variables = set(re.findall(r'[a-zA-Z]', expression))
-    symbols = {v: sp.symbols(v) for v in variables}
-    return symbols
 
 def parse_word_problem(text):
     text = clean_input(text)
