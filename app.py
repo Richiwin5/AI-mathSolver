@@ -9,41 +9,45 @@ CORS(app)
 @app.route("/solve-text", methods=["POST"])
 def solve_text():
     data = request.get_json(force=True)
-    print("Received request:", data)  # ✅ debug
+    print("Received request:", data)  #  debug
     question = data.get("question", "")
     result = solve_anything(question)
-    print("Solution:", result)  # ✅ debug
+    print("Solution:", result)  #  debug
     return jsonify({"solution": result})
 
-@app.route("/solve-image", methods=["POST"])
-def solve_image():
-    print("====== SOLVE IMAGE CALLED ======")
-    print("METHOD:", request.method)
-    print("CONTENT TYPE:", request.content_type)
-    print("FILES:", request.files)
+@app.route("/solve-file", methods=["POST"])
+def solve_file():
+    from werkzeug.utils import secure_filename
+    import os
 
-    image = request.files.get("image")
+    uploaded_file = request.files.get("file")  # key = 'file'
 
-    if not image:
-        print("IMAGE NOT FOUND")
-        return jsonify({"error": "No image sent"}), 400
+    if not uploaded_file:
+        return jsonify({"error": "No file sent"}), 400
 
-    print("✅ IMAGE RECEIVED")
-    print("Filename:", image.filename)
-    print("Mimetype:", image.mimetype)
+    # Secure filename
+    filename = secure_filename(uploaded_file.filename)
+    path = os.path.join(os.getcwd(), filename)
+    uploaded_file.save(path)
 
-    path = "uploaded.jpg"
-    image.save(path)
-    print("✅ IMAGE SAVED")
+    # Determine processing based on extension
+    if filename.lower().endswith((".jpg", ".jpeg", ".png")):
+        result = solve_math_from_image(path)
+    elif filename.lower().endswith(".pdf"):
+        result = "PDF processing not implemented yet"
+    elif filename.lower().endswith((".doc", ".docx")):
+        result = "Word processing not implemented yet"
+    else:
+        result = f"Cannot process {filename}"
 
-    result = solve_math_from_image(path)
-    print("Image solution:", result)
+    return jsonify({"filename": filename, "solution": result})
 
-    return jsonify({"solution": result})
 
 
 if __name__ == "__main__":
     host = "0.0.0.0"
     port = 5000
     print(f"Richiwin: Math solver backend is ready!")
+    app.run(host=host, port=port, debug=True)
+
   
