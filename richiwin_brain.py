@@ -63,54 +63,75 @@ def get_response(intents_list, intents_json):
 # ----------------------------
 # 2️⃣ Math / Symbolic Brain
 # ----------------------------
+
+def clean_input(text):
+    text = text.lower().replace("solve", "").replace("what is", "").replace("?", "").strip()
+    text = text.replace("^", "**")
+    # Implicit multiplication
+    text = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', text)
+    re.sub(r'([a-zA-Z])(\d)', r'\1*\2', text)
+    re.sub(r'([a-zA-Z])([a-zA-Z])', r'\1*\2', text)
+    return text
+
+def detect_variables(expression):
+    variables = set(re.findall(r'[a-zA-Z]', expression))
+    symbols = {v: sp.symbols(v) for v in variables}
+    return symbols
+
 def solve_math_full(expression):
-    try:
-        steps = []
+    """
+    New step-by-step solver for linear equations
+    """
+    expression = clean_input(expression)
+    if not expression.strip():
+        return "Invalid or empty expression"
 
-        # Clean
-        expression = expression.lower().replace("solve","").replace("what is","").replace("?","").strip()
-        expression = expression.replace("^","**")
-        # Implicit multiplication
-        expression = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', expression)
-        expression = re.sub(r'([a-zA-Z])(\d)', r'\1*\2', expression)
-        expression = re.sub(r'([a-zA-Z])([a-zA-Z])', r'\1*\2', expression)
+    symbols = detect_variables(expression)
+    steps = []
 
-        # Detect variables
-        variables = set(re.findall(r'[a-zA-Z]', expression))
-        symbols = {v: sp.symbols(v) for v in variables}
+    # Handle equations
+    if "=" in expression:
+        lhs, rhs = expression.split("=")
+        lhs_expr = parse_expr(lhs, local_dict=symbols)
+        rhs_expr = parse_expr(rhs, local_dict=symbols)
+        var = list(symbols.values())[0]  # assume one variable
 
-        # Equation
-        if "=" in expression:
-            lhs, rhs = expression.split("=")
-            lhs_expr = sp.sympify(lhs, locals=symbols)
-            rhs_expr = sp.sympify(rhs, locals=symbols)
-            steps.append(f"Step 1: Equation → {lhs_expr} = {rhs_expr}")
-            eq = lhs_expr - rhs_expr
-            steps.append(f"Step 2: Move all terms to one side → {eq} = 0")
-            solution = sp.solve(eq, list(symbols.values()))
-            steps.append(f"Step 3: Solve → {solution}")
-            return "\n".join(steps)
+        steps.append(f"Step 1: Start with the equation → {lhs_expr} = {rhs_expr}")
 
-        # Expression
-        expr = sp.sympify(expression, locals=symbols)
-        simplified = sp.simplify(expr)
-        steps.append(f"Step 1: Original → {expr}")
-        steps.append(f"Step 2: Simplified → {simplified}")
+        # Move constants from LHS to RHS
+        lhs_terms = lhs_expr.as_ordered_terms()
+        const_terms = [t for t in lhs_terms if t.free_symbols != {var}]
+        if const_terms:
+            const_sum = sum(const_terms)
+            new_lhs = lhs_expr - const_sum
+            new_rhs = rhs_expr - const_sum
+            steps.append(f"Step 2: Subtract {const_sum} from both sides → {new_lhs} = {new_rhs}")
+        else:
+            new_lhs = lhs_expr
+            new_rhs = rhs_expr
 
-        # Calculus
-        if "derivative" in expression or "integrate" in expression:
-            var = list(symbols.values())[0] if symbols else sp.symbols('x')
-            if "derivative" in expression:
-                deriv = sp.diff(expr,var)
-                steps.append(f"Step 3: Derivative w.r.t {var} → {deriv}")
-            if "integrate" in expression:
-                integ = sp.integrate(expr,var)
-                steps.append(f"Step 3: Indefinite integral w.r.t {var} → {integ}")
+        # Divide by coefficient of variable
+        coeff = new_lhs.coeff(var)
+        if coeff != 1:
+            final_rhs = new_rhs / coeff
+            steps.append(f"Step 3: Divide both sides by {coeff} → {var} = {final_rhs}")
+        else:
+            final_rhs = new_rhs
+            steps.append(f"Step 3: Variable already isolated → {var} = {final_rhs}")
+
+        # Simplify numerical result
+        simplified = sp.simplify(final_rhs)
+        steps.append(f"Step 4: Simplify → {var} = {simplified}")
 
         return "\n".join(steps)
 
-    except Exception as e:
-        return f"Math error: {e}"
+    # Handle simple expressions
+    else:
+        expr = parse_expr(expression, local_dict=symbols)
+        simplified = sp.simplify(expr)
+        steps.append(f"Step 1: Original expression → {expr}")
+        steps.append(f"Step 2: Simplified → {simplified}")
+        return "\n".join(steps)
 
 # ----------------------------
 # 3️⃣ Graphs
