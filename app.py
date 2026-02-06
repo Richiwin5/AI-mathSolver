@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from richiwin_brain import solve_anything
@@ -46,8 +47,8 @@ def solve_file():
 
 if __name__ == "__main__":
     host = "0.0.0.0"
-    port = 5000
-    print(f"Richiwin: Math solver backend is ready!")
-    app.run(host=host, port=port, debug=True)
+    port = int(os.environ.get("PORT", 5000))  # use Render port if available
+    print(f"Richiwin: Math solver backend is ready on port {port}!")
+    app.run(host=host, port=port)
 
   
