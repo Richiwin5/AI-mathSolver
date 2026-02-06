@@ -1,8 +1,12 @@
 # ================================
-# 9️⃣ Advanced Word Problem AI Parsing
+# Advanced Word Problem Solver
 # ================================
+import re
+import sympy as sp
 import spacy
-nlp = spacy.load("en_core_web_sm")  # English NLP model
+
+# Load English NLP model
+nlp = spacy.load("en_core_web_sm")
 
 def advanced_word_problem_solver(sentence):
     """
@@ -15,13 +19,12 @@ def advanced_word_problem_solver(sentence):
         # 1️⃣ Preprocessing
         sentence_clean = sentence.lower().replace("?", "").replace(",", "")
         sentence_clean = sentence_clean.replace("what is", "").replace("find", "")
+        sentence_clean = re.sub(r'\b(a|the|first|second|number)\b\s*', '', sentence_clean)  # remove extra words
 
-        # 2️⃣ Use NLP to detect numbers and variables
+        # 2️⃣ Use NLP to detect numbers and potential variables
         doc = nlp(sentence_clean)
-        numbers = [token.text for token in doc if token.like_num]
-        vars_found = [token.text for token in doc if token.is_alpha and token.text not in ["solve","number","times","plus","minus","equals","is"]]
-        
-        # Assume first variable is 'x' if none
+        vars_found = [token.text for token in doc if token.is_alpha and token.text not in
+                      ["solve","times","plus","minus","equals","is"]]
         var_symbol = sp.symbols(vars_found[0]) if vars_found else sp.symbols('x')
 
         # 3️⃣ Replace word patterns with symbols/operators
@@ -36,16 +39,16 @@ def advanced_word_problem_solver(sentence):
         # Replace generic 'number' with variable
         sentence_clean = re.sub(r'\bnumber\b', str(var_symbol), sentence_clean)
 
-        # Extract valid math characters only
+        # 4️⃣ Keep only valid math characters
         equation_chars = re.findall(r'[0-9\*\+\-/\^\(\)'+str(var_symbol)+r'=]+', sentence_clean)
         if not equation_chars:
             return "Richiwin: Could not parse the word problem."
 
         eq_str = "".join(equation_chars)
 
-        # 4️⃣ Solve equation
+        # 5️⃣ Solve equation step by step
         if "=" in eq_str:
-            lhs,rhs = eq_str.split("=")
+            lhs, rhs = eq_str.split("=")
             lhs_expr = sp.sympify(lhs)
             rhs_expr = sp.sympify(rhs)
             eq = lhs_expr - rhs_expr
@@ -59,6 +62,6 @@ def advanced_word_problem_solver(sentence):
             steps.append(f"Step 2: Simplified → {sp.simplify(expr)}")
 
         return "\n".join(steps)
-    
+
     except Exception as e:
         return f"Richiwin: Could not solve the word problem ({e})"
