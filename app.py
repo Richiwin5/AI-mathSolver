@@ -31,10 +31,10 @@ def solve_text():
 
     return jsonify({"solution": result})
 
-
 @app.route("/solve-file", methods=["POST"])
 def solve_file():
     from werkzeug.utils import secure_filename
+    from richiwin_camera_math import pdf_to_images
 
     uploaded_file = request.files.get("file")
 
@@ -46,13 +46,27 @@ def solve_file():
 
     uploaded_file.save(path)
 
+    # IMAGE FILES
     if filename.lower().endswith((".jpg", ".jpeg", ".png")):
+
         result = solve_math_from_image(path)
 
+    # PDF FILES
     elif filename.lower().endswith(".pdf"):
-        result = "PDF processing not implemented yet"
 
+        pages = pdf_to_images(path)
+
+        results = []
+
+        for page in pages:
+            res = solve_math_from_image(page)
+            results.append(res)
+
+        result = results
+
+    # OTHER FILES
     else:
+
         result = f"Unsupported file: {filename}"
 
     return jsonify({

@@ -2,11 +2,20 @@ import pytesseract
 import cv2
 import re
 from richiwin_logic import solve_expression, solve_word_problem
+import fitz  # pymupdf
+from PIL import Image
+import os
 
 def extract_text_from_image(image_path):
+
+    # Check file exists
+    if not os.path.exists(image_path):
+        raise ValueError(f"Image file not found: {image_path}")
+
     image = cv2.imread(image_path)
+
     if image is None:
-        raise ValueError("Failed to read image file")
+        raise ValueError(f"OpenCV cannot read this image: {image_path}")
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.adaptiveThreshold(
@@ -16,16 +25,36 @@ def extract_text_from_image(image_path):
         11, 2
     )
 
-    text = pytesseract.image_to_string(gray, config="--psm 6")
+   text = pytesseract.image_to_string(
+    gray,
+    config="--oem 3 --psm 6"
+)
+
     return text.strip()
 
 
+def pdf_to_images(pdf_path):
+    images = []
+
+    doc = fitz.open(pdf_path)
+
+    for i, page in enumerate(doc):
+        pix = page.get_pixmap(dpi=300)
+
+        img_path = f"page_{i}.png"
+        pix.save(img_path)
+
+        images.append(img_path)
+
+    return images
+
 def clean_ocr_text(text):
-    """Keep only math characters to prevent SymPy errors"""
+    text = text.replace("÷", "/")
     text = text.replace("\n", " ").strip()
     text = re.sub(r'[^0-9xX\+\-\*/=\(\)\s]', '', text)
     text = re.sub(r'\s+', ' ', text)
     return text
+
 
 
 def normalize_math_expression(expr):
@@ -42,7 +71,7 @@ def is_equation(text):
     return any(c in math_chars for c in text) and any(c.isdigit() for c in text)
 
 def solve_math_from_image(image_path):
-    #  Extract text from image
+    # 1️⃣ Extract text from image
     extracted_text = extract_text_from_image(image_path)
     if not extracted_text:
         return "No readable math found in the image."
@@ -50,7 +79,7 @@ def solve_math_from_image(image_path):
     print("OCR RAW:", extracted_text)
     text_lower = extracted_text.lower()
 
-    #  Geometry / word-problem detection
+    # 2️⃣ Geometry / word-problem detection
 
     # ---- TRIANGLE AREA ----
     if "triangle" in text_lower and "area" in text_lower:
@@ -78,7 +107,7 @@ def solve_math_from_image(image_path):
             hypotenuse = (a**2 + b**2)**0.5
             return f"Hypotenuse = sqrt({a}^2 + {b}^2) = {hypotenuse}"
 
-    #  If it’s algebra / general math
+    # 3️⃣ If it’s algebra / general math
     cleaned_text = clean_ocr_text(extracted_text)
     normalized_text = normalize_math_expression(cleaned_text)
 
@@ -89,7 +118,7 @@ def solve_math_from_image(image_path):
         try:
             return solve_expression(normalized_text)
         except Exception as e:
-            return f"Could not solve expression: {e}"
+            return "Could not understand the math expression clearly."
     else:
         # fallback for numbers or descriptive text
         numbers = re.findall(r'\d+\.?\d*', extracted_text)
