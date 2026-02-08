@@ -62,7 +62,7 @@ def parse_word_problem(text):
 def solve_expression(expr_text):
     expr_text = clean_input(expr_text)
 
-    # ✅ SAFETY CHECK (THIS FIX)
+    # SAFETY CHECK (THIS FIX)
     if not expr_text.strip():
         return "Invalid or empty math expression"
 
@@ -106,7 +106,7 @@ def solve_word_problem(text):
 # 5️⃣ Main Loop
 # ----------------------------
 def main():
-    print("Richiwin: Hello! I am your reasoning brain 🧠 (advanced word problem ready)")
+    print("Richiwin: Hello! I am your reasoning brain  (advanced word problem ready)")
     
     while True:
         user_input = input("You: ").strip().lower()
@@ -115,14 +115,14 @@ def main():
             print("Richiwin: Goodbye!")
             break
 
-        # 🧠 Advanced AI Word Problem Detection
+        #  Advanced AI Word Problem Detection
         elif any(word in user_input for word in [
             "twice", "thrice", "number", "equals", "sum", "difference",
             "times", "divided", "find", "what is"
         ]):
             print(advanced_word_problem_solver(user_input))
 
-        # ✏️ Direct equation solving
+        # Direct equation solving
         elif "=" in user_input or "solve" in user_input:
             print(solve_expression(user_input))
 

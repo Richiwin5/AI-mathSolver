@@ -42,7 +42,7 @@ def is_equation(text):
     return any(c in math_chars for c in text) and any(c.isdigit() for c in text)
 
 def solve_math_from_image(image_path):
-    # 1️⃣ Extract text from image
+    #  Extract text from image
     extracted_text = extract_text_from_image(image_path)
     if not extracted_text:
         return "No readable math found in the image."
@@ -50,7 +50,7 @@ def solve_math_from_image(image_path):
     print("OCR RAW:", extracted_text)
     text_lower = extracted_text.lower()
 
-    # 2️⃣ Geometry / word-problem detection
+    #  Geometry / word-problem detection
 
     # ---- TRIANGLE AREA ----
     if "triangle" in text_lower and "area" in text_lower:
@@ -78,7 +78,7 @@ def solve_math_from_image(image_path):
             hypotenuse = (a**2 + b**2)**0.5
             return f"Hypotenuse = sqrt({a}^2 + {b}^2) = {hypotenuse}"
 
-    # 3️⃣ If it’s algebra / general math
+    #  If it’s algebra / general math
     cleaned_text = clean_ocr_text(extracted_text)
     normalized_text = normalize_math_expression(cleaned_text)
 
