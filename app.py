@@ -36,15 +36,23 @@ def solve_file():
     from werkzeug.utils import secure_filename
     from richiwin_camera_math import pdf_to_images
 
+    print("FILES:", request.files)  # Debug
+
     uploaded_file = request.files.get("file")
 
     if not uploaded_file:
         return jsonify({"error": "No file sent"}), 400
 
     filename = secure_filename(uploaded_file.filename)
-    path = os.path.join(os.getcwd(), filename)
 
-    uploaded_file.save(path)
+    # Render-safe temp folder
+    UPLOAD_FOLDER = "/tmp"
+    path = os.path.join(UPLOAD_FOLDER, filename)
+
+    try:
+        uploaded_file.save(path)
+    except Exception as e:
+        return jsonify({"error": f"Save failed: {str(e)}"}), 500
 
     # IMAGE FILES
     if filename.lower().endswith((".jpg", ".jpeg", ".png")):
@@ -64,9 +72,7 @@ def solve_file():
 
         result = results
 
-    # OTHER FILES
     else:
-
         result = f"Unsupported file: {filename}"
 
     return jsonify({
