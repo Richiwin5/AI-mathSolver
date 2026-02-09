@@ -33,6 +33,14 @@ def solve_text():
 
 @app.route("/solve-file", methods=["POST"])
 def solve_file():
+
+    print("HEADERS:", request.headers)
+    print("FILES:", request.files)
+    print("FORM:", request.form)
+    print("DATA:", request.data)
+
+    uploaded_file = request.files.get("file")
+
     from werkzeug.utils import secure_filename
     from richiwin_camera_math import pdf_to_images
 

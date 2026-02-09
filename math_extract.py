@@ -11,11 +11,3 @@ def extract_math(text):
         return matches[-1].strip()
     return None
 
-
-# import re
-
-# def extract_math(text):
-#     match = re.findall(r"[0-9+\-*/().xX= ]+", text)
-#     if match:
-#         return match[-1].strip()
-#     return None
