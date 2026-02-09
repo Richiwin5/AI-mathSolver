@@ -1,5 +1,8 @@
 import os
 import re
+import shutil
+
+
 
 
 def extract_text_from_image(image_path):
@@ -8,7 +11,7 @@ def extract_text_from_image(image_path):
     import cv2
    import pytesseract
 
-pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+pytesseract.pytesseract.tesseract_cmd = shutil.which("tesseract")
 
     if not os.path.exists(image_path):
         raise ValueError(f"Image file not found: {image_path}")

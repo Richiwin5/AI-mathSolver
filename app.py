@@ -34,51 +34,28 @@ def solve_text():
 @app.route("/solve-file", methods=["POST"])
 def solve_file():
 
-    print("HEADERS:", request.headers)
-    print("FILES:", request.files)
-    print("FORM:", request.form)
-    print("DATA:", request.data)
-
-    uploaded_file = request.files.get("file")
-
-    from werkzeug.utils import secure_filename
-    from richiwin_camera_math import pdf_to_images
-
-    print("FILES:", request.files)  # Debug
-
     uploaded_file = request.files.get("file")
 
     if not uploaded_file:
         return jsonify({"error": "No file sent"}), 400
 
+    from werkzeug.utils import secure_filename
+    from richiwin_camera_math import pdf_to_images
+
     filename = secure_filename(uploaded_file.filename)
 
-    # Render-safe temp folder
-    UPLOAD_FOLDER = "/tmp"
-    path = os.path.join(UPLOAD_FOLDER, filename)
+    path = os.path.join("/tmp", filename)
 
-    try:
-        uploaded_file.save(path)
-    except Exception as e:
-        return jsonify({"error": f"Save failed: {str(e)}"}), 500
+    uploaded_file.save(path)
 
-    # IMAGE FILES
+    # IMAGE
     if filename.lower().endswith((".jpg", ".jpeg", ".png")):
-
         result = solve_math_from_image(path)
 
-    # PDF FILES
+    # PDF
     elif filename.lower().endswith(".pdf"):
-
         pages = pdf_to_images(path)
-
-        results = []
-
-        for page in pages:
-            res = solve_math_from_image(page)
-            results.append(res)
-
-        result = results
+        result = [solve_math_from_image(p) for p in pages]
 
     else:
         result = f"Unsupported file: {filename}"
@@ -90,8 +67,11 @@ def solve_file():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True)
 
-    print(f"🚀 Server running on port {port}")
+# if __name__ == "__main__":
+#     port = int(os.environ.get("PORT", 5000))
 
-    app.run(host="0.0.0.0", port=port)
+#     print(f"🚀 Server running on port {port}")
+
+#     app.run(host="0.0.0.0", port=port)
