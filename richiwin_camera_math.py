@@ -1,11 +1,14 @@
 import os
 import re
 
+
 def extract_text_from_image(image_path):
     """Extract text from an image using OCR (pytesseract + OpenCV)"""
     # Lazy imports to save memory on cloud deploy
     import cv2
-    import pytesseract
+   import pytesseract
+
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
     if not os.path.exists(image_path):
         raise ValueError(f"Image file not found: {image_path}")
